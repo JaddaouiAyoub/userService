@@ -6,6 +6,7 @@ import com.example.service_utilisateur.dto.RegisterUserDto;
 import com.example.service_utilisateur.dto.UserDto;
 import com.example.service_utilisateur.model.User;
 import com.example.service_utilisateur.service.AuthenticationService;
+import com.example.service_utilisateur.service.JwtService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,8 +14,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 @RestController
 @AllArgsConstructor
-@CrossOrigin("*")
 public class AuthenticationController {
+
+        private final JwtService jwtService;
 //    private final JwtService jwtService;
     private final AuthenticationService authenticationService;
 
@@ -30,11 +32,15 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<User> authenticate(@RequestBody LoginUserDto loginUserDto) {
+    public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
         User authenticatedUser = authenticationService.authenticate(loginUserDto);
 
-        LoginResponse loginResponse = new LoginResponse();
+        String jwtToken = jwtService.generateToken(authenticatedUser,authenticatedUser.getId(),authenticatedUser.getRole());
 
-        return ResponseEntity.ok(authenticatedUser);
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setToken(jwtToken);
+        loginResponse.setExpiresIn(jwtService.getExpirationTime());
+
+        return ResponseEntity.ok(loginResponse);
     }
 }
